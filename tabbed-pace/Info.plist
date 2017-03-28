@@ -44,5 +44,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMotionUsageDescription</key>
+	<string>Require access to your motion data to inform you of your pace and distance.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This App requires access to your location so it can record your workout route.</string>
 </dict>
 </plist>

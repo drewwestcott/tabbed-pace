@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3A6F27C51E82E531007021B5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6F27C41E82E531007021B5 /* AppDelegate.swift */; };
-		3A6F27C71E82E531007021B5 /* FirstViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6F27C61E82E531007021B5 /* FirstViewController.swift */; };
+		3A6F27C71E82E531007021B5 /* recordWorkoutVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6F27C61E82E531007021B5 /* recordWorkoutVC.swift */; };
 		3A6F27C91E82E531007021B5 /* SecondViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6F27C81E82E531007021B5 /* SecondViewController.swift */; };
 		3A6F27CC1E82E531007021B5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3A6F27CA1E82E531007021B5 /* Main.storyboard */; };
 		3A6F27CE1E82E531007021B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A6F27CD1E82E531007021B5 /* Assets.xcassets */; };
@@ -18,7 +18,7 @@
 /* Begin PBXFileReference section */
 		3A6F27C11E82E531007021B5 /* tabbed-pace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "tabbed-pace.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A6F27C41E82E531007021B5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		3A6F27C61E82E531007021B5 /* FirstViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstViewController.swift; sourceTree = "<group>"; };
+		3A6F27C61E82E531007021B5 /* recordWorkoutVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = recordWorkoutVC.swift; sourceTree = "<group>"; };
 		3A6F27C81E82E531007021B5 /* SecondViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondViewController.swift; sourceTree = "<group>"; };
 		3A6F27CB1E82E531007021B5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		3A6F27CD1E82E531007021B5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -57,7 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				3A6F27C41E82E531007021B5 /* AppDelegate.swift */,
-				3A6F27C61E82E531007021B5 /* FirstViewController.swift */,
+				3A6F27C61E82E531007021B5 /* recordWorkoutVC.swift */,
 				3A6F27C81E82E531007021B5 /* SecondViewController.swift */,
 				3A6F27CA1E82E531007021B5 /* Main.storyboard */,
 				3A6F27CD1E82E531007021B5 /* Assets.xcassets */,
@@ -142,7 +142,7 @@
 			files = (
 				3A6F27C91E82E531007021B5 /* SecondViewController.swift in Sources */,
 				3A6F27C51E82E531007021B5 /* AppDelegate.swift in Sources */,
-				3A6F27C71E82E531007021B5 /* FirstViewController.swift in Sources */,
+				3A6F27C71E82E531007021B5 /* recordWorkoutVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +304,7 @@
 				3A6F27D71E82E531007021B5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
