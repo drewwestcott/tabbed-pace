@@ -8,11 +8,21 @@
 
 import UIKit
 
-class SecondViewController: UIViewController {
-
+class SettingsVC: UIViewController {
+	
+	@IBOutlet weak var settingsSwitch: UISwitch!
+	
+	let settingsData = UserDefaults.standard
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		// Do any additional setup after loading the view, typically from a nib.
+
+		if let distanceSetting = settingsData.string(forKey: "distanceSetting") {
+			if distanceSetting == "miles" {
+				
+				
+			}
+		}
 	}
 
 	override func didReceiveMemoryWarning() {
