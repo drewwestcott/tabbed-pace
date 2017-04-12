@@ -11,6 +11,7 @@ import UIKit
 import CoreMotion
 import CoreLocation
 import HealthKit
+import AVFoundation
 
 //MARK: - CLLocationManagerDelegate
 class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
@@ -23,24 +24,36 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 	@IBOutlet weak var saveButton: UIButton!
 	
 	//MARK: Initialisation
-	var seconds = 0.0
+	var start = CFAbsoluteTime()
+	var workoutSeconds = 0
 	var distance = 0.0
+	var secDistance = 0.0
 	var pace: Double = 0.0
 	var averagePace: Double = 0.0
+	
+	let speech = AVSpeechSynthesizer()
+	var feedbackUtterance = AVSpeechUtterance(string: "")
+	var voiceToUse: AVSpeechSynthesisVoice?
+
+	var annouceEvery = 30.0
+	var count = 1.0
 	
 	lazy var locationManager: CLLocationManager = {
 		
 		var _locationManager = CLLocationManager()
 		_locationManager.delegate = self
 		_locationManager.desiredAccuracy = kCLLocationAccuracyBest
+		_locationManager.allowsBackgroundLocationUpdates = true
 		_locationManager.activityType = .fitness
 		
 		return _locationManager
 	}()
-	
+
+	let session = AVAudioSession.sharedInstance()
+
 	lazy var locations = [CLLocation]()
 	lazy var timer = Timer()
-	lazy var feedback = Timer()
+	lazy var unduck = Timer()
 	
 	let pedometer = CMPedometer()
 
@@ -48,15 +61,27 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 		super.viewDidLoad()
 		pauseButton.isHidden = true
 		saveButton.isHidden = true
+		configureAudioSession()
+		
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {
+		
 		locationManager.requestAlwaysAuthorization()
+		
+		for voice in AVSpeechSynthesisVoice.speechVoices() {
+			if #available(iOS 9.0, *) {
+				if voice.name == "Samantha" {
+					voiceToUse = voice
+				}
+			}
+		}
+
 	}
 	
 	override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
-		timer.invalidate()
+		//timer.invalidate()
 	}
 
 	override func didReceiveMemoryWarning() {
@@ -64,16 +89,36 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 		// Dispose of any resources that can be recreated.
 	}
 	
+	func configureAudioSession(){
+		do{
+			try session.setCategory(AVAudioSessionCategoryPlayback, with: [.duckOthers])
+		} catch {
+			print(
+				"Unable to configure audio session"
+			)
+			return
+		}
+		print("Audio Session Configured")
+	}
+	
+	func deactivateAudio() {
+		do {
+		 try session.setActive(false)
+		} catch {
+			print("unable to deactivate")
+		}
+	}
+
 	@IBAction func startButtonPressed() {
 		
-		seconds = 0.0
+		workoutSeconds = 0
 		distance = 0.0
 		locations.removeAll()
 		pauseButton.isHidden = false
+		start = CFAbsoluteTimeGetCurrent()
 
-		timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(eachSecond), userInfo: nil, repeats: true)
-		feedback = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(vocalFeedback(time:pace:)), userInfo: nil, repeats: true)
-		//startLocationUpdates()
+		timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(updateDisplay), userInfo: nil, repeats: true)
+		startLocationUpdates()
 		queryPedometer()
 		
 		
@@ -83,42 +128,37 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 		
 		timer.invalidate()
 		pedometer.stopUpdates()
-		//locationManager.stopUpdatingLocation()
-		var workout = Workout(duration: Int(seconds), pace: pace, distance: distance)
+		locationManager.stopUpdatingLocation()
 		
 		print(locations.count)
 		saveButton.isHidden = false
 		pauseButton.isHidden = true
+		deactivateAudio()
 		
 		
 	}
 
 	@IBAction func savePressed(_ sender: Any) {
 		
+		var workout = Workout(duration: Int(workoutSeconds), pace: pace, distance: distance)
+		workoutSeconds = 0
+		pace = 0.0
+		distance = 0
+		updateDisplay()
 		print("Saved pressed")
 		saveButton.isHidden = true
 		
 	}
 	
-	func eachSecond(timer: Timer){
+	func updateDisplay(){
 		
-		var displaySeconds = 0.0
-		seconds += 1
-		pauseButton.isHidden = false
-		
-		let minute = seconds / 60.0
-		if seconds > 59 {
-			let roundMinute = Int(minute) * 60
-			displaySeconds = seconds - (Double(roundMinute))
-		} else {
-			displaySeconds = seconds
-		}
-		let hour = seconds / (60.0 * 60.0)
-		timerLabel.text = "\(String(format: "%02d",Int(hour))) : \(String(format: "%02d",Int(minute))) : \(String(format: "%02d",Int(displaySeconds)))"
+		let (hour,minute,seconds) = calculateHoursMinutesSeconds(seconds: workoutSeconds)
+		timerLabel.text = "\(String(format: "%02d",hour)) : \(String(format: "%02d",minute)) : \(String(format: "%02d",seconds))"
 		distanceLabel.text = String(format: "%\(0.2)f", distance/1000) + " meters"
 		let kiloMeterPerHour = pace * 60 * 60 / 1000
 		let paceText = String(format: "%\(0.2)f", kiloMeterPerHour) + " k/h"
 		paceLabel.text =  paceText
+		//print("\(String(format: "%02d",hour)) : \(String(format: "%02d",minute)) : \(String(format: "%02d",seconds))")
 		
 	}
 	
@@ -128,8 +168,9 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 		
 	}
 	
+	
 	func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-		
+
 		for location in locations {
 			print("Locations:\(locations.count)")
 			
@@ -137,11 +178,20 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 				let travelled = location.distance(from: self.locations.last!)
 				print(travelled)
 				if travelled > 1 {
-					self.distance += travelled
+					self.secDistance += travelled
 				}
 			}
 			
 			self.locations.append(locations.last!)
+			
+		}
+		
+		workoutSeconds = Int(CFAbsoluteTimeGetCurrent() - start)
+		print("Elapsed: \(workoutSeconds)")
+		
+		if workoutSeconds > Int(count * (annouceEvery - 1)) {
+			vocalFeedback(feedbackTime: workoutSeconds)
+			count += 1
 		}
 		
 	}
@@ -181,8 +231,25 @@ class recordWorkoutVC: UIViewController, CLLocationManagerDelegate {
 	
 	}
 	
-	func vocalFeedback(time: Double, pace: Double) {
+	func vocalFeedback(feedbackTime: Int) {
+
+		let (hours,minutes,seconds) = calculateHoursMinutesSeconds(seconds: feedbackTime)
+		let elapsedTime = "Elapsed time, \(minutes) minutes and \(seconds) seconds. . ."
+		let distanceTravelled = "Distance \(Int(distance)/1000) kilometers. . ."
+		let secTravelled = "GPS Distance \(Int(secDistance))."
 		
+		let feedback = elapsedTime + distanceTravelled + secTravelled
+		feedbackUtterance = AVSpeechUtterance(string: feedback)
+		feedbackUtterance.rate = 0.5
+		feedbackUtterance.voice = voiceToUse
+		feedbackUtterance.volume = 0.4
+		speech.speak(feedbackUtterance)
+		unduck = Timer.scheduledTimer(timeInterval: 9, target: self, selector: #selector(deactivateAudio), userInfo: nil, repeats: false)
+
+	}
+	
+	func calculateHoursMinutesSeconds(seconds: Int) -> (Int, Int, Int) {
+		return(seconds / 3600, (seconds % 3600) / 60, (seconds % 60) % 60)
 	}
 }
 
